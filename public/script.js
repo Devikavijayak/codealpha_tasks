@@ -3,13 +3,11 @@ let currentUser = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     await initApp();
-
     document.getElementById('btn-post').addEventListener('click', createPost);
 });
 
 async function initApp() {
     try {
-        // Fetch current user (Hardcoded to ID 1 in backend)
         const res = await fetch(`\${API_URL}/users/1`);
         currentUser = await res.json();
         
@@ -24,40 +22,58 @@ async function initApp() {
 
 function updateNavbar() {
     const userInfo = document.getElementById('current-user-info');
-    userInfo.innerHTML = `
-        <span class="username">\${currentUser.username}</span>
-        <img src="\${currentUser.avatar}" class="avatar avatar-sm" alt="avatar">
-    `;
-    document.getElementById('create-post-avatar').src = currentUser.avatar;
-    document.getElementById('create-post-avatar').style.display = 'block';
+    if (userInfo) {
+        userInfo.innerHTML = `
+            <img src="\${currentUser.avatar}" class="avatar avatar-sm" alt="avatar">
+            <div class="current-user-info-text">
+                <span class="name">\${currentUser.username}</span>
+                <span class="handle">@\${currentUser.username.toLowerCase()}</span>
+            </div>
+            <i class="fa-solid fa-ellipsis" style="margin-left: auto; color: var(--text-muted)"></i>
+        `;
+    }
+    const createAvatar = document.getElementById('create-post-avatar');
+    if (createAvatar) {
+        createAvatar.src = currentUser.avatar;
+        createAvatar.style.display = 'block';
+    }
 }
 
 function updateProfileSidebar() {
     const sidebar = document.getElementById('sidebar-profile');
-    sidebar.innerHTML = `
-        <div class="card">
-            <div class="profile-header">
-                <img src="\${currentUser.avatar}" class="avatar avatar-lg" alt="avatar">
-                <h3>\${currentUser.username}</h3>
-                <p style="color: var(--text-secondary); font-size: 0.9rem;">\${currentUser.bio || 'No bio yet'}</p>
-            </div>
-            <div class="profile-stats">
-                <div class="stat-box">
-                    <div class="stat-value">\${currentUser.followersCount || 0}</div>
-                    <div class="stat-label">Followers</div>
+    if (sidebar) {
+        sidebar.innerHTML = `
+            <img src="\${currentUser.avatar}" class="avatar avatar-lg" alt="avatar">
+            <h3>\${currentUser.username}</h3>
+            <p>\${currentUser.bio || 'Living my best life ✨'}</p>
+            <div class="stats-row">
+                <div class="stat-col">
+                    <div class="num">\${currentUser.followingCount || 0}</div>
+                    <div class="lbl">Following</div>
                 </div>
-                <div class="stat-box">
-                    <div class="stat-value">\${currentUser.followingCount || 0}</div>
-                    <div class="stat-label">Following</div>
+                <div class="stat-col">
+                    <div class="num">\${currentUser.followersCount || 0}</div>
+                    <div class="lbl">Followers</div>
                 </div>
             </div>
-        </div>
-    `;
+        `;
+    }
 }
 
 async function loadFeed() {
     const container = document.getElementById('posts-container');
-    container.innerHTML = '<div class="skeleton-card" style="height: 200px;"></div>';
+    container.innerHTML = `
+        <div class="post-skeleton" style="padding: 24px;">
+            <div style="display:flex; gap:16px;">
+                <div class="skeleton-avatar"></div>
+                <div style="flex:1">
+                    <div class="skeleton-line short"></div>
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-box"></div>
+                </div>
+            </div>
+        </div>
+    `;
 
     try {
         const res = await fetch(`\${API_URL}/feed`);
@@ -65,7 +81,7 @@ async function loadFeed() {
         
         container.innerHTML = '';
         if (posts.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:var(--text-secondary); margin-top:2rem;">No posts to show. Follow some people!</p>';
+            container.innerHTML = '<div style="padding:40px; text-align:center; color:var(--text-muted);">No posts to show. Start following people!</div>';
             return;
         }
 
@@ -74,43 +90,46 @@ async function loadFeed() {
         });
     } catch (err) {
         console.error('Error loading feed', err);
-        container.innerHTML = '<p style="color:red">Failed to load feed.</p>';
+        container.innerHTML = '<div style="padding:20px; color:var(--danger);">Failed to load feed.</div>';
     }
 }
 
 function createPostElement(post) {
     const div = document.createElement('div');
     div.className = 'post';
-    const timeString = new Date(post.timestamp).toLocaleString();
+    const timeString = new Date(post.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' });
     
     div.innerHTML = `
-        <div class="post-header">
-            <div class="post-user-info">
-                <img src="\${post.avatar}" class="avatar" alt="avatar">
-                <div class="post-user-meta">
+        <div class="post-layout">
+            <img src="\${post.avatar}" class="avatar avatar-md" alt="avatar">
+            <div class="post-content-area">
+                <div class="post-meta">
                     <span class="name">\${post.username}</span>
-                    <span class="time">\${timeString}</span>
+                    <span class="username">@\${post.username.toLowerCase()}</span>
+                    <span class="time">· \${timeString}</span>
                 </div>
-            </div>
-        </div>
-        <div class="post-content">\${post.content}</div>
-        <div class="post-actions">
-            <button class="action-btn \${post.isLikedByMe ? 'liked' : ''}" onclick="toggleLike(\${post.id}, this)">
-                <i class="\${post.isLikedByMe ? 'fa-solid' : 'fa-regular'} fa-heart"></i> 
-                <span class="like-count">\${post.likesCount}</span>
-            </button>
-            <button class="action-btn" onclick="toggleComments(\${post.id})">
-                <i class="fa-regular fa-comment"></i> 
-                <span>\${post.commentsCount}</span>
-            </button>
-        </div>
-        <div class="comments-section" id="comments-\${post.id}">
-            <div class="comments-list" id="comments-list-\${post.id}">
-                <!-- Comments injected here -->
-            </div>
-            <div class="create-comment">
-                <img src="\${currentUser.avatar}" class="avatar avatar-sm" alt="avatar">
-                <input type="text" id="comment-input-\${post.id}" placeholder="Write a comment..." onkeypress="handleCommentSubmit(event, \${post.id})">
+                <div class="post-text">\${post.content}</div>
+                <div class="post-interaction">
+                    <button class="interact-btn comment" onclick="toggleComments(\${post.id})">
+                        <i class="fa-regular fa-comment"></i> 
+                        <span>\${post.commentsCount > 0 ? post.commentsCount : ''}</span>
+                    </button>
+                    <button class="interact-btn like \${post.isLikedByMe ? 'active' : ''}" onclick="toggleLike(\${post.id}, this)">
+                        <i class="\${post.isLikedByMe ? 'fa-solid' : 'fa-regular'} fa-heart"></i> 
+                        <span class="like-count">\${post.likesCount > 0 ? post.likesCount : ''}</span>
+                    </button>
+                    <button class="interact-btn share">
+                        <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                    </button>
+                </div>
+                
+                <div class="comments-container" id="comments-\${post.id}">
+                    <div id="comments-list-\${post.id}"></div>
+                    <div class="add-comment">
+                        <img src="\${currentUser.avatar}" class="avatar avatar-sm" alt="avatar">
+                        <input type="text" id="comment-input-\${post.id}" placeholder="Post your reply" onkeypress="handleCommentSubmit(event, \${post.id})">
+                    </div>
+                </div>
             </div>
         </div>
     `;
@@ -135,7 +154,7 @@ async function createPost() {
         
         if (res.ok) {
             input.value = '';
-            loadFeed(); // Reload feed to show new post
+            loadFeed();
         }
     } catch (err) {
         console.error('Failed to post', err);
@@ -152,20 +171,20 @@ async function toggleLike(postId, btnEl) {
         
         const icon = btnEl.querySelector('i');
         const countSpan = btnEl.querySelector('.like-count');
-        let count = parseInt(countSpan.textContent);
+        let count = parseInt(countSpan.textContent) || 0;
 
         if (data.liked) {
-            btnEl.classList.add('liked');
+            btnEl.classList.add('active');
             icon.classList.remove('fa-regular');
             icon.classList.add('fa-solid');
             count++;
         } else {
-            btnEl.classList.remove('liked');
+            btnEl.classList.remove('active');
             icon.classList.remove('fa-solid');
             icon.classList.add('fa-regular');
             count--;
         }
-        countSpan.textContent = count;
+        countSpan.textContent = count > 0 ? count : '';
     } catch (err) {
         console.error('Error toggling like', err);
     }
@@ -173,18 +192,18 @@ async function toggleLike(postId, btnEl) {
 
 async function toggleComments(postId) {
     const section = document.getElementById(`comments-\${postId}`);
-    if (section.classList.contains('active')) {
-        section.classList.remove('active');
+    if (section.classList.contains('show')) {
+        section.classList.remove('show');
         return;
     }
     
-    section.classList.add('active');
+    section.classList.add('show');
     loadComments(postId);
 }
 
 async function loadComments(postId) {
     const list = document.getElementById(`comments-list-\${postId}`);
-    list.innerHTML = '<p style="font-size:0.8rem; color:var(--text-secondary);">Loading comments...</p>';
+    list.innerHTML = '<div class="skeleton-line short" style="margin-bottom:16px;"></div>';
     
     try {
         const res = await fetch(`\${API_URL}/posts/\${postId}/comments`);
@@ -193,20 +212,17 @@ async function loadComments(postId) {
         list.innerHTML = '';
         comments.forEach(c => {
             list.innerHTML += `
-                <div class="comment">
+                <div class="comment-item">
                     <img src="\${c.avatar}" class="avatar avatar-sm" alt="avatar">
-                    <div class="comment-content">
-                        <div class="comment-author">\${c.username}</div>
-                        <div class="comment-text">\${c.content}</div>
+                    <div class="comment-bubble">
+                        <div class="author">\${c.username}</div>
+                        <div class="text">\${c.content}</div>
                     </div>
                 </div>
             `;
         });
-        if (comments.length === 0) {
-            list.innerHTML = '<p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:1rem;">No comments yet.</p>';
-        }
     } catch (err) {
-        list.innerHTML = '<p style="color:red; font-size:0.8rem;">Error loading comments.</p>';
+        list.innerHTML = '<p style="color:var(--danger); font-size:12px;">Error loading comments.</p>';
     }
 }
 
@@ -224,8 +240,7 @@ async function handleCommentSubmit(event, postId) {
                 body: JSON.stringify({ content })
             });
             input.value = '';
-            loadComments(postId); // reload
-            // Also ideally increment comment count in UI, but skipped for brevity
+            loadComments(postId);
         } catch (err) {
             console.error('Error posting comment', err);
         } finally {
@@ -237,23 +252,26 @@ async function handleCommentSubmit(event, postId) {
 
 async function loadSuggestions() {
     const container = document.getElementById('suggestions-container');
+    if (!container) return;
+    
     try {
         const res = await fetch(`\${API_URL}/users`);
         const users = await res.json();
         
         container.innerHTML = '';
-        // Filter out current user and take first few
         const suggestions = users.filter(u => u.id !== currentUser.id).slice(0, 3);
         
         suggestions.forEach(user => {
-            // Need to check if following, for simplicity we assume not following in suggestions
             container.innerHTML += `
                 <div class="suggestion-item">
                     <div class="suggestion-info">
-                        <img src="\${user.avatar}" class="avatar avatar-sm" alt="avatar">
-                        <span class="suggestion-name">\${user.username}</span>
+                        <img src="\${user.avatar}" class="avatar avatar-md" alt="avatar">
+                        <div>
+                            <span class="s-name">\${user.username}</span>
+                            <span class="s-handle">@\${user.username.toLowerCase()}</span>
+                        </div>
                     </div>
-                    <button class="btn-secondary" style="padding: 0.2rem 0.6rem; font-size: 0.8rem;" onclick="toggleFollow(\${user.id}, this)">Follow</button>
+                    <button class="btn-follow" onclick="toggleFollow(\${user.id}, this)">Follow</button>
                 </div>
             `;
         });
@@ -268,19 +286,15 @@ async function toggleFollow(userId, btnEl) {
         const data = await res.json();
         
         if (data.following) {
-            btnEl.textContent = 'Unfollow';
-            btnEl.classList.remove('btn-secondary');
-            btnEl.style.border = '1px solid var(--text-secondary)';
+            btnEl.textContent = 'Following';
+            btnEl.classList.add('following');
         } else {
             btnEl.textContent = 'Follow';
-            btnEl.classList.add('btn-secondary');
-            btnEl.style.border = '';
+            btnEl.classList.remove('following');
         }
         
-        // Reload feed to include new person's posts
         loadFeed();
-        // Reload profile stats
-        initApp(); // simple way to refresh stats
+        initApp(); 
     } catch (err) {
         console.error('Error following', err);
     }

@@ -3,66 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini Social - Connect & Share</title>
-    <!-- Use Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome for icons -->
+    <title>MiniSocial - Premium Connect</title>
+    <!-- Google Fonts: Plus Jakarta Sans for a very premium, modern SaaS look -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="logo">
-                <i class="fa-solid fa-fire"></i> MiniSocial
-            </div>
-            <div class="nav-links">
-                <a href="#" class="active" id="nav-feed"><i class="fa-solid fa-house"></i> Feed</a>
-                <a href="#" id="nav-profile"><i class="fa-solid fa-user"></i> Profile</a>
-            </div>
-            <div class="user-menu" id="current-user-info">
-                <!-- Current user avatar and name will be injected here -->
-                <div class="skeleton-avatar"></div>
-            </div>
-        </div>
-    </nav>
-
-    <main class="container">
-        <!-- Sidebar Profile (Optional for desktop view) -->
-        <aside class="sidebar" id="sidebar-profile">
-            <!-- Populated via JS -->
-            <div class="skeleton-card"></div>
-        </aside>
-
-        <!-- Main Feed Area -->
-        <section class="feed-area">
-            <div class="create-post-card">
-                <div class="create-post-header">
-                    <img src="" alt="avatar" id="create-post-avatar" class="avatar" style="display: none;">
-                    <textarea id="post-content" placeholder="What's on your mind?"></textarea>
+    <div class="app-layout">
+        
+        <!-- Left Navigation Sidebar -->
+        <nav class="sidebar-left">
+            <div class="sidebar-content">
+                <div class="brand">
+                    <div class="brand-icon">
+                        <i class="fa-solid fa-layer-group"></i>
+                    </div>
+                    <span class="brand-text">Aura</span>
                 </div>
-                <div class="create-post-footer">
-                    <button class="btn-primary" id="btn-post">Post</button>
+
+                <div class="nav-menu">
+                    <a href="#" class="nav-item active">
+                        <i class="fa-solid fa-house"></i>
+                        <span>Home</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <i class="fa-solid fa-compass"></i>
+                        <span>Explore</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <i class="fa-regular fa-bell"></i>
+                        <span>Notifications</span>
+                        <span class="badge">3</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <i class="fa-regular fa-envelope"></i>
+                        <span>Messages</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <i class="fa-regular fa-user"></i>
+                        <span>Profile</span>
+                    </a>
+                </div>
+
+                <!-- Current User Profile summary at bottom of nav -->
+                <div class="current-user-badge" id="current-user-info">
+                    <div class="skeleton-avatar"></div>
+                    <div class="skeleton-text"></div>
                 </div>
             </div>
+        </nav>
+
+        <!-- Main Feed Column -->
+        <main class="feed-column">
+            <header class="feed-header glass-effect">
+                <h2>Home</h2>
+                <div class="header-actions">
+                    <button class="icon-btn"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+                </div>
+            </header>
+
+            <div class="create-post-container">
+                <div class="post-input-wrapper">
+                    <img src="" alt="Avatar" id="create-post-avatar" class="avatar avatar-md" style="display: none;">
+                    <div class="input-area">
+                        <textarea id="post-content" placeholder="What's happening?"></textarea>
+                        <div class="post-actions-row">
+                            <div class="media-actions">
+                                <button class="icon-btn tooltip" data-tip="Media"><i class="fa-regular fa-image"></i></button>
+                                <button class="icon-btn tooltip" data-tip="GIF"><i class="fa-solid fa-film"></i></button>
+                                <button class="icon-btn tooltip" data-tip="Emoji"><i class="fa-regular fa-face-smile"></i></button>
+                            </div>
+                            <button class="btn-primary" id="btn-post">Post</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
 
             <div id="posts-container">
-                <!-- Posts will be injected here -->
-                <div class="skeleton-card" style="height: 200px; margin-top: 20px;"></div>
-                <div class="skeleton-card" style="height: 200px; margin-top: 20px;"></div>
+                <!-- Skeleton Loader -->
+                <div class="post-skeleton">
+                    <div class="skeleton-avatar"></div>
+                    <div class="skeleton-body">
+                        <div class="skeleton-line short"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-box"></div>
+                    </div>
+                </div>
             </div>
-        </section>
+        </main>
 
-        <!-- Right sidebar for suggestions/trending (Optional) -->
-        <aside class="right-sidebar">
-            <div class="card suggestions-card">
-                <h3>Who to follow</h3>
+        <!-- Right Sidebar (Widgets) -->
+        <aside class="sidebar-right">
+            <div class="search-bar">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" placeholder="Search Aura...">
+            </div>
+
+            <div class="widget-card glass-card profile-stats-widget" id="sidebar-profile">
+                <!-- Stats injected here via JS -->
+                 <div class="skeleton-line"></div>
+                 <div class="skeleton-line"></div>
+            </div>
+
+            <div class="widget-card glass-card">
+                <h3 class="widget-title">Suggested for you</h3>
                 <div id="suggestions-container">
-                    <!-- Suggestions -->
+                    <!-- Suggestions injected here -->
+                    <div class="skeleton-line"></div>
+                </div>
+            </div>
+
+            <div class="widget-card glass-card">
+                <h3 class="widget-title">Trending Now</h3>
+                <div class="trending-item">
+                    <span class="trending-category">Technology • Trending</span>
+                    <h4>#WebDevelopment</h4>
+                    <span class="trending-stats">12.5k posts</span>
+                </div>
+                <div class="trending-item">
+                    <span class="trending-category">Design • Trending</span>
+                    <h4>UI/UX Trends 2026</h4>
+                    <span class="trending-stats">8,204 posts</span>
+                </div>
+                <div class="trending-item">
+                    <span class="trending-category">Career • Trending</span>
+                    <h4>Internship Success</h4>
+                    <span class="trending-stats">4,192 posts</span>
                 </div>
             </div>
         </aside>
-    </main>
+
+    </div>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-nav">
+        <a href="#" class="active"><i class="fa-solid fa-house"></i></a>
+        <a href="#"><i class="fa-solid fa-search"></i></a>
+        <a href="#"><i class="fa-regular fa-bell"></i></a>
+        <a href="#"><i class="fa-regular fa-envelope"></i></a>
+    </nav>
 
     <script src="script.js"></script>
 </body>
