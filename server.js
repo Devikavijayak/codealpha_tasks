@@ -122,7 +122,7 @@ app.post('/api/auth/register', async (req, res) => {
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        const avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=\${username}`;
+        const avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`;
         
         db.run("INSERT INTO users (username, password, bio, avatar) VALUES (?, ?, ?, ?)", 
         [username, hashedPassword, 'Hello! I am new here.', avatar], function(err) {
@@ -315,5 +315,5 @@ app.get('/api/feed', authenticateToken, (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:\${PORT}`);
+    console.log(`Server is running on http://localhost:${PORT}`);
 });

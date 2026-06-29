@@ -17,7 +17,7 @@ async function checkAuthStatus() {
     }
 
     try {
-        const res = await fetchWithAuth(`\${API_URL}/users/me`);
+        const res = await fetchWithAuth(`${API_URL}/users/me`);
         if (!res.ok) throw new Error('Token invalid');
         
         currentUser = await res.json();
@@ -75,7 +75,7 @@ async function handleAuth(event) {
     const endpoint = isLoginMode ? '/auth/login' : '/auth/register';
     
     try {
-        const res = await fetch(`\${API_URL}\${endpoint}`, {
+        const res = await fetch(`${API_URL}${endpoint}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
@@ -115,7 +115,7 @@ async function fetchWithAuth(url, options = {}) {
     }
     
     const headers = options.headers || {};
-    headers['Authorization'] = `Bearer \${token}`;
+    headers['Authorization'] = `Bearer ${token}`;
     
     const res = await fetch(url, { ...options, headers });
     if (res.status === 401 || res.status === 403) {
@@ -138,10 +138,10 @@ function updateNavbar() {
     const userInfo = document.getElementById('current-user-info');
     if (userInfo) {
         userInfo.innerHTML = `
-            <img src="\${currentUser.avatar}" class="avatar avatar-sm" alt="avatar">
+            <img src="${currentUser.avatar}" class="avatar avatar-sm" alt="avatar">
             <div class="current-user-info-text">
-                <span class="name">\${currentUser.username}</span>
-                <span class="handle">@\${currentUser.username.toLowerCase()}</span>
+                <span class="name">${currentUser.username}</span>
+                <span class="handle">@${currentUser.username.toLowerCase()}</span>
             </div>
             <i class="fa-solid fa-ellipsis" style="margin-left: auto; color: var(--text-muted)"></i>
         `;
@@ -157,16 +157,16 @@ function updateProfileSidebar() {
     const sidebar = document.getElementById('sidebar-profile');
     if (sidebar) {
         sidebar.innerHTML = `
-            <img src="\${currentUser.avatar}" class="avatar avatar-lg" alt="avatar">
-            <h3>\${currentUser.username}</h3>
-            <p>\${currentUser.bio || 'Living my best life ✨'}</p>
+            <img src="${currentUser.avatar}" class="avatar avatar-lg" alt="avatar">
+            <h3>${currentUser.username}</h3>
+            <p>${currentUser.bio || 'Living my best life ✨'}</p>
             <div class="stats-row">
                 <div class="stat-col">
-                    <div class="num">\${currentUser.followingCount || 0}</div>
+                    <div class="num">${currentUser.followingCount || 0}</div>
                     <div class="lbl">Following</div>
                 </div>
                 <div class="stat-col">
-                    <div class="num">\${currentUser.followersCount || 0}</div>
+                    <div class="num">${currentUser.followersCount || 0}</div>
                     <div class="lbl">Followers</div>
                 </div>
             </div>
@@ -190,7 +190,7 @@ async function loadFeed() {
     `;
 
     try {
-        const res = await fetchWithAuth(`\${API_URL}/feed`);
+        const res = await fetchWithAuth(`${API_URL}/feed`);
         const posts = await res.json();
         
         container.innerHTML = '';
@@ -215,33 +215,33 @@ function createPostElement(post) {
     
     div.innerHTML = `
         <div class="post-layout">
-            <img src="\${post.avatar}" class="avatar avatar-md" alt="avatar">
+            <img src="${post.avatar}" class="avatar avatar-md" alt="avatar">
             <div class="post-content-area">
                 <div class="post-meta">
-                    <span class="name">\${post.username}</span>
-                    <span class="username">@\${post.username.toLowerCase()}</span>
-                    <span class="time">· \${timeString}</span>
+                    <span class="name">${post.username}</span>
+                    <span class="username">@${post.username.toLowerCase()}</span>
+                    <span class="time">· ${timeString}</span>
                 </div>
-                <div class="post-text">\${post.content}</div>
+                <div class="post-text">${post.content}</div>
                 <div class="post-interaction">
-                    <button class="interact-btn comment" onclick="toggleComments(\${post.id})">
+                    <button class="interact-btn comment" onclick="toggleComments(${post.id})">
                         <i class="fa-regular fa-comment"></i> 
-                        <span>\${post.commentsCount > 0 ? post.commentsCount : ''}</span>
+                        <span>${post.commentsCount > 0 ? post.commentsCount : ''}</span>
                     </button>
-                    <button class="interact-btn like \${post.isLikedByMe ? 'active' : ''}" onclick="toggleLike(\${post.id}, this)">
-                        <i class="\${post.isLikedByMe ? 'fa-solid' : 'fa-regular'} fa-heart"></i> 
-                        <span class="like-count">\${post.likesCount > 0 ? post.likesCount : ''}</span>
+                    <button class="interact-btn like ${post.isLikedByMe ? 'active' : ''}" onclick="toggleLike(${post.id}, this)">
+                        <i class="${post.isLikedByMe ? 'fa-solid' : 'fa-regular'} fa-heart"></i> 
+                        <span class="like-count">${post.likesCount > 0 ? post.likesCount : ''}</span>
                     </button>
                     <button class="interact-btn share">
                         <i class="fa-solid fa-arrow-up-from-bracket"></i>
                     </button>
                 </div>
                 
-                <div class="comments-container" id="comments-\${post.id}">
-                    <div id="comments-list-\${post.id}"></div>
+                <div class="comments-container" id="comments-${post.id}">
+                    <div id="comments-list-${post.id}"></div>
                     <div class="add-comment">
-                        <img src="\${currentUser.avatar}" class="avatar avatar-sm" alt="avatar">
-                        <input type="text" id="comment-input-\${post.id}" placeholder="Post your reply" onkeypress="handleCommentSubmit(event, \${post.id})">
+                        <img src="${currentUser.avatar}" class="avatar avatar-sm" alt="avatar">
+                        <input type="text" id="comment-input-${post.id}" placeholder="Post your reply" onkeypress="handleCommentSubmit(event, ${post.id})">
                     </div>
                 </div>
             </div>
@@ -260,7 +260,7 @@ async function createPost() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
     try {
-        const res = await fetchWithAuth(`\${API_URL}/posts`, {
+        const res = await fetchWithAuth(`${API_URL}/posts`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ content })
@@ -280,7 +280,7 @@ async function createPost() {
 
 async function toggleLike(postId, btnEl) {
     try {
-        const res = await fetchWithAuth(`\${API_URL}/posts/\${postId}/like`, { method: 'POST' });
+        const res = await fetchWithAuth(`${API_URL}/posts/${postId}/like`, { method: 'POST' });
         const data = await res.json();
         
         const icon = btnEl.querySelector('i');
@@ -305,7 +305,7 @@ async function toggleLike(postId, btnEl) {
 }
 
 async function toggleComments(postId) {
-    const section = document.getElementById(`comments-\${postId}`);
+    const section = document.getElementById(`comments-${postId}`);
     if (section.classList.contains('show')) {
         section.classList.remove('show');
         return;
@@ -316,21 +316,21 @@ async function toggleComments(postId) {
 }
 
 async function loadComments(postId) {
-    const list = document.getElementById(`comments-list-\${postId}`);
+    const list = document.getElementById(`comments-list-${postId}`);
     list.innerHTML = '<div class="skeleton-line short" style="margin-bottom:16px;"></div>';
     
     try {
-        const res = await fetchWithAuth(`\${API_URL}/posts/\${postId}/comments`);
+        const res = await fetchWithAuth(`${API_URL}/posts/${postId}/comments`);
         const comments = await res.json();
         
         list.innerHTML = '';
         comments.forEach(c => {
             list.innerHTML += `
                 <div class="comment-item">
-                    <img src="\${c.avatar}" class="avatar avatar-sm" alt="avatar">
+                    <img src="${c.avatar}" class="avatar avatar-sm" alt="avatar">
                     <div class="comment-bubble">
-                        <div class="author">\${c.username}</div>
-                        <div class="text">\${c.content}</div>
+                        <div class="author">${c.username}</div>
+                        <div class="text">${c.content}</div>
                     </div>
                 </div>
             `;
@@ -348,7 +348,7 @@ async function handleCommentSubmit(event, postId) {
 
         input.disabled = true;
         try {
-            await fetchWithAuth(`\${API_URL}/posts/\${postId}/comments`, {
+            await fetchWithAuth(`${API_URL}/posts/${postId}/comments`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content })
@@ -369,7 +369,7 @@ async function loadSuggestions() {
     if (!container) return;
     
     try {
-        const res = await fetchWithAuth(`\${API_URL}/users`);
+        const res = await fetchWithAuth(`${API_URL}/users`);
         const users = await res.json();
         
         container.innerHTML = '';
@@ -379,13 +379,13 @@ async function loadSuggestions() {
             container.innerHTML += `
                 <div class="suggestion-item">
                     <div class="suggestion-info">
-                        <img src="\${user.avatar}" class="avatar avatar-md" alt="avatar">
+                        <img src="${user.avatar}" class="avatar avatar-md" alt="avatar">
                         <div>
-                            <span class="s-name">\${user.username}</span>
-                            <span class="s-handle">@\${user.username.toLowerCase()}</span>
+                            <span class="s-name">${user.username}</span>
+                            <span class="s-handle">@${user.username.toLowerCase()}</span>
                         </div>
                     </div>
-                    <button class="btn-follow" onclick="toggleFollow(\${user.id}, this)">Follow</button>
+                    <button class="btn-follow" onclick="toggleFollow(${user.id}, this)">Follow</button>
                 </div>
             `;
         });
@@ -396,7 +396,7 @@ async function loadSuggestions() {
 
 async function toggleFollow(userId, btnEl) {
     try {
-        const res = await fetchWithAuth(`\${API_URL}/users/\${userId}/follow`, { method: 'POST' });
+        const res = await fetchWithAuth(`${API_URL}/users/${userId}/follow`, { method: 'POST' });
         const data = await res.json();
         
         if (data.following) {
@@ -409,7 +409,7 @@ async function toggleFollow(userId, btnEl) {
         
         loadFeed();
         // Since we don't have me endpoint updating followers instantly, we just refresh me
-        const meRes = await fetchWithAuth(`\${API_URL}/users/me`);
+        const meRes = await fetchWithAuth(`${API_URL}/users/me`);
         currentUser = await meRes.json();
         updateProfileSidebar(); 
     } catch (err) {
