@@ -1,33 +1,33 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-    --bg-base: #F8FAFC; /* Clean off-white background */
+    --bg-base: #F9F9F9; /* Clean, slightly warm editorial white */
     --bg-surface: #FFFFFF; /* Pure white for cards */
-    --bg-surface-hover: #F1F5F9;
-    --text-primary: #0F172A; /* Dark slate for high readability */
-    --text-secondary: #475569;
-    --text-muted: #94A3B8;
+    --bg-surface-hover: #F0F0F0;
+    --text-primary: #111111; /* Deep charcoal/black for elegance */
+    --text-secondary: #555555;
+    --text-muted: #999999;
     
-    /* Emerald Accents */
-    --accent-primary: #10B981; /* Emerald Green */
-    --accent-secondary: #059669; /* Darker Emerald */
-    --accent-gradient: linear-gradient(135deg, #10B981 0%, #059669 100%);
-    --accent-glow: 0 0 20px rgba(16, 185, 129, 0.3);
+    /* Fashion Accents (Monochrome) */
+    --accent-primary: #000000; /* Stark Black */
+    --accent-secondary: #333333; /* Dark Gray */
+    --accent-gradient: linear-gradient(135deg, #333333 0%, #000000 100%);
+    --accent-glow: 0 8px 20px rgba(0, 0, 0, 0.15);
     
-    --danger: #EF4444;
-    --danger-glow: 0 0 15px rgba(239, 68, 68, 0.3);
-    --success: #10B981;
+    --danger: #C91A25; /* Editorial Red */
+    --danger-glow: 0 4px 15px rgba(201, 26, 37, 0.2);
+    --success: #000000;
     
-    --border-color: #E2E8F0; /* Soft light gray border */
-    --border-color-light: #F1F5F9;
+    --border-color: #E5E5E5; /* Crisp, subtle border */
+    --border-color-light: #F2F2F2;
     
     --font-sans: 'Plus Jakarta Sans', sans-serif;
     
     --radius-full: 9999px;
-    --radius-xl: 24px;
-    --radius-lg: 16px;
-    --radius-md: 12px;
-    --radius-sm: 8px;
+    --radius-xl: 16px; /* Slightly sharper corners for fashion feel */
+    --radius-lg: 12px;
+    --radius-md: 8px;
+    --radius-sm: 4px;
     
     --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
