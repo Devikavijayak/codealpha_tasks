@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function initApp() {
     try {
         // Fetch current user (Hardcoded to ID 1 in backend)
-        const res = await fetch(\`\${API_URL}/users/1\`);
+        const res = await fetch(`\${API_URL}/users/1`);
         currentUser = await res.json();
         
         updateNavbar();
@@ -24,17 +24,17 @@ async function initApp() {
 
 function updateNavbar() {
     const userInfo = document.getElementById('current-user-info');
-    userInfo.innerHTML = \`
+    userInfo.innerHTML = `
         <span class="username">\${currentUser.username}</span>
         <img src="\${currentUser.avatar}" class="avatar avatar-sm" alt="avatar">
-    \`;
+    `;
     document.getElementById('create-post-avatar').src = currentUser.avatar;
     document.getElementById('create-post-avatar').style.display = 'block';
 }
 
 function updateProfileSidebar() {
     const sidebar = document.getElementById('sidebar-profile');
-    sidebar.innerHTML = \`
+    sidebar.innerHTML = `
         <div class="card">
             <div class="profile-header">
                 <img src="\${currentUser.avatar}" class="avatar avatar-lg" alt="avatar">
@@ -52,7 +52,7 @@ function updateProfileSidebar() {
                 </div>
             </div>
         </div>
-    \`;
+    `;
 }
 
 async function loadFeed() {
@@ -60,7 +60,7 @@ async function loadFeed() {
     container.innerHTML = '<div class="skeleton-card" style="height: 200px;"></div>';
 
     try {
-        const res = await fetch(\`\${API_URL}/feed\`);
+        const res = await fetch(`\${API_URL}/feed`);
         const posts = await res.json();
         
         container.innerHTML = '';
@@ -83,7 +83,7 @@ function createPostElement(post) {
     div.className = 'post';
     const timeString = new Date(post.timestamp).toLocaleString();
     
-    div.innerHTML = \`
+    div.innerHTML = `
         <div class="post-header">
             <div class="post-user-info">
                 <img src="\${post.avatar}" class="avatar" alt="avatar">
@@ -113,7 +113,7 @@ function createPostElement(post) {
                 <input type="text" id="comment-input-\${post.id}" placeholder="Write a comment..." onkeypress="handleCommentSubmit(event, \${post.id})">
             </div>
         </div>
-    \`;
+    `;
     return div;
 }
 
@@ -127,7 +127,7 @@ async function createPost() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
     try {
-        const res = await fetch(\`\${API_URL}/posts\`, {
+        const res = await fetch(`\${API_URL}/posts`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ content })
@@ -147,7 +147,7 @@ async function createPost() {
 
 async function toggleLike(postId, btnEl) {
     try {
-        const res = await fetch(\`\${API_URL}/posts/\${postId}/like\`, { method: 'POST' });
+        const res = await fetch(`\${API_URL}/posts/\${postId}/like`, { method: 'POST' });
         const data = await res.json();
         
         const icon = btnEl.querySelector('i');
@@ -172,7 +172,7 @@ async function toggleLike(postId, btnEl) {
 }
 
 async function toggleComments(postId) {
-    const section = document.getElementById(\`comments-\${postId}\`);
+    const section = document.getElementById(`comments-\${postId}`);
     if (section.classList.contains('active')) {
         section.classList.remove('active');
         return;
@@ -183,16 +183,16 @@ async function toggleComments(postId) {
 }
 
 async function loadComments(postId) {
-    const list = document.getElementById(\`comments-list-\${postId}\`);
+    const list = document.getElementById(`comments-list-\${postId}`);
     list.innerHTML = '<p style="font-size:0.8rem; color:var(--text-secondary);">Loading comments...</p>';
     
     try {
-        const res = await fetch(\`\${API_URL}/posts/\${postId}/comments\`);
+        const res = await fetch(`\${API_URL}/posts/\${postId}/comments`);
         const comments = await res.json();
         
         list.innerHTML = '';
         comments.forEach(c => {
-            list.innerHTML += \`
+            list.innerHTML += `
                 <div class="comment">
                     <img src="\${c.avatar}" class="avatar avatar-sm" alt="avatar">
                     <div class="comment-content">
@@ -200,7 +200,7 @@ async function loadComments(postId) {
                         <div class="comment-text">\${c.content}</div>
                     </div>
                 </div>
-            \`;
+            `;
         });
         if (comments.length === 0) {
             list.innerHTML = '<p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:1rem;">No comments yet.</p>';
@@ -218,7 +218,7 @@ async function handleCommentSubmit(event, postId) {
 
         input.disabled = true;
         try {
-            await fetch(\`\${API_URL}/posts/\${postId}/comments\`, {
+            await fetch(`\${API_URL}/posts/\${postId}/comments`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content })
@@ -238,7 +238,7 @@ async function handleCommentSubmit(event, postId) {
 async function loadSuggestions() {
     const container = document.getElementById('suggestions-container');
     try {
-        const res = await fetch(\`\${API_URL}/users\`);
+        const res = await fetch(`\${API_URL}/users`);
         const users = await res.json();
         
         container.innerHTML = '';
@@ -247,7 +247,7 @@ async function loadSuggestions() {
         
         suggestions.forEach(user => {
             // Need to check if following, for simplicity we assume not following in suggestions
-            container.innerHTML += \`
+            container.innerHTML += `
                 <div class="suggestion-item">
                     <div class="suggestion-info">
                         <img src="\${user.avatar}" class="avatar avatar-sm" alt="avatar">
@@ -255,7 +255,7 @@ async function loadSuggestions() {
                     </div>
                     <button class="btn-secondary" style="padding: 0.2rem 0.6rem; font-size: 0.8rem;" onclick="toggleFollow(\${user.id}, this)">Follow</button>
                 </div>
-            \`;
+            `;
         });
     } catch (err) {
         console.error('Error loading suggestions', err);
@@ -264,7 +264,7 @@ async function loadSuggestions() {
 
 async function toggleFollow(userId, btnEl) {
     try {
-        const res = await fetch(\`\${API_URL}/users/\${userId}/follow\`, { method: 'POST' });
+        const res = await fetch(`\${API_URL}/users/\${userId}/follow`, { method: 'POST' });
         const data = await res.json();
         
         if (data.following) {
