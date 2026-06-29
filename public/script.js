@@ -4,7 +4,7 @@ let isLoginMode = true;
 
 document.addEventListener('DOMContentLoaded', async () => {
     checkAuthStatus();
-    document.getElementById('btn-post').addEventListener('click', createPost);
+    document.getElementById('btn-post')?.addEventListener('click', createPost);
 });
 
 // --- NAVIGATION LOGIC ---
@@ -37,10 +37,12 @@ function switchTab(tabId) {
         title.textContent = tabId.charAt(0).toUpperCase() + tabId.slice(1);
     }
 
-    // If profile tab, load profile specific data
-    if (tabId === 'profile') {
-        renderProfileTab();
-    }
+    // Load tab specific data
+    if (tabId === 'home') loadFeed();
+    if (tabId === 'profile') renderProfileTab();
+    if (tabId === 'explore') loadExplore();
+    if (tabId === 'notifications') loadNotifications();
+    if (tabId === 'messages') loadMessages();
 }
 
 function renderProfileTab() {
@@ -95,50 +97,147 @@ document.getElementById('search-input')?.addEventListener('input', (e) => {
     });
 });
 
-// Setup mock content for other tabs
-document.addEventListener('DOMContentLoaded', () => {
-    // Notifications mock
-    document.getElementById('tab-notifications').innerHTML = `
-        <div style="text-align:left;">
-            <h3 style="margin-bottom:16px;">Notifications</h3>
-            <div class="comment-item"><div class="comment-bubble"><strong>Alice</strong> liked your post. <br><small>2 hours ago</small></div></div>
-            <div class="comment-item"><div class="comment-bubble"><strong>Bob</strong> started following you! <br><small>5 hours ago</small></div></div>
-            <div class="comment-item"><div class="comment-bubble"><strong>Charlie</strong> commented on your post. <br><small>1 day ago</small></div></div>
-        </div>
-    `;
+// Explore
+async function loadExplore() {
+    const container = document.getElementById('tab-explore');
+    container.innerHTML = '<div class="skeleton-line"></div>';
+    
+    try {
+        const res = await fetchWithAuth(`${API_URL}/explore`);
+        const posts = await res.json();
+        
+        container.innerHTML = '<h3 style="margin-bottom:16px;">Trending Posts</h3>';
+        if (posts.length === 0) {
+            container.innerHTML += '<p style="color:var(--text-muted);">No trending posts found.</p>';
+            return;
+        }
+        
+        posts.forEach(post => {
+            container.appendChild(createPostElement(post));
+        });
+    } catch (err) {
+        container.innerHTML = '<p style="color:var(--danger);">Failed to load explore feed.</p>';
+    }
+}
 
-    // Messages mock
-    document.getElementById('tab-messages').innerHTML = `
-        <div style="text-align:left;">
-            <h3 style="margin-bottom:16px;">Messages</h3>
-            <div class="comment-item">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alice" class="avatar avatar-md" alt="avatar">
-                <div class="comment-bubble" style="flex:1;"><strong>Alice</strong><br><span style="color:var(--text-muted)">Hey, how is the project going?</span></div>
-            </div>
-            <div class="comment-item">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Bob" class="avatar avatar-md" alt="avatar">
-                <div class="comment-bubble" style="flex:1;"><strong>Bob</strong><br><span style="color:var(--text-muted)">Check out this link...</span></div>
-            </div>
-        </div>
-    `;
+// Notifications
+async function loadNotifications() {
+    const container = document.getElementById('tab-notifications');
+    container.innerHTML = '<div class="skeleton-line"></div>';
+    
+    try {
+        const res = await fetchWithAuth(`${API_URL}/notifications`);
+        const notifs = await res.json();
+        
+        container.innerHTML = '<h3 style="margin-bottom:16px;">Notifications</h3>';
+        if (notifs.length === 0) {
+            container.innerHTML += '<p style="color:var(--text-muted);">No new notifications.</p>';
+            return;
+        }
+        
+        notifs.forEach(n => {
+            let actionText = '';
+            let icon = '';
+            if (n.type === 'like') { actionText = 'liked your post'; icon = 'fa-heart'; }
+            if (n.type === 'comment') { actionText = 'commented on your post'; icon = 'fa-comment'; }
+            if (n.type === 'follow') { actionText = 'started following you'; icon = 'fa-user-plus'; }
+            
+            const timeString = new Date(n.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
 
-    // Explore mock
-    document.getElementById('tab-explore').innerHTML = `
-        <div style="text-align:left;">
-            <h3 style="margin-bottom:16px;">Trending Topics</h3>
-            <div style="background:var(--card-bg); padding:16px; border-radius:var(--radius-md); margin-bottom:12px;">
-                <small style="color:var(--text-muted)">Trending in Tech</small>
-                <h4>#WebDevelopment</h4>
-                <small>15.4K posts</small>
+            container.innerHTML += `
+                <div class="comment-item" style="align-items:center;">
+                    <img src="${n.avatar}" class="avatar avatar-md" alt="avatar">
+                    <div class="comment-bubble" style="flex:1;">
+                        <i class="fa-solid ${icon}" style="color:var(--accent-primary); margin-right:8px;"></i>
+                        <strong>${n.username}</strong> ${actionText}.
+                        <br><small style="color:var(--text-muted)">${timeString}</small>
+                    </div>
+                </div>
+            `;
+        });
+    } catch (err) {
+        container.innerHTML = '<p style="color:var(--danger);">Failed to load notifications.</p>';
+    }
+}
+
+// Messages
+let availableUsersForMessage = [];
+async function loadMessages() {
+    const container = document.getElementById('tab-messages');
+    container.innerHTML = '<div class="skeleton-line"></div>';
+    
+    try {
+        // Fetch all users to populate the "Send to" dropdown
+        const usersRes = await fetchWithAuth(`${API_URL}/users`);
+        availableUsersForMessage = await usersRes.json();
+        
+        const res = await fetchWithAuth(`${API_URL}/messages`);
+        const messages = await res.json();
+        
+        let html = '<h3 style="margin-bottom:16px;">Messages</h3>';
+        
+        // Message Compose UI
+        html += `
+            <div style="background:var(--card-bg); padding:16px; border-radius:var(--radius-md); border:1px solid var(--border-color); margin-bottom:20px;">
+                <h4 style="margin-bottom:8px;">New Message</h4>
+                <select id="msg-receiver" style="width:100%; padding:8px; margin-bottom:8px; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+                    <option value="">Select a user...</option>
+                    ${availableUsersForMessage.filter(u => u.id !== currentUser.id).map(u => `<option value="${u.id}">${u.username}</option>`).join('')}
+                </select>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="msg-content" placeholder="Write a message..." style="flex:1; padding:8px; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+                    <button class="btn-primary" onclick="sendMessage()" style="padding:8px 16px;">Send</button>
+                </div>
             </div>
-            <div style="background:var(--card-bg); padding:16px; border-radius:var(--radius-md); margin-bottom:12px;">
-                <small style="color:var(--text-muted)">Trending Worldwide</small>
-                <h4>#AuraLaunch</h4>
-                <small>42.1K posts</small>
-            </div>
-        </div>
-    `;
-});
+        `;
+        
+        if (messages.length === 0) {
+            html += '<p style="color:var(--text-muted);">Your inbox is empty.</p>';
+        } else {
+            messages.forEach(m => {
+                const isSentByMe = m.sender_id === currentUser.id;
+                const displayUser = isSentByMe ? m.receiver_id : m.sender_id;
+                // find display user name
+                const u = availableUsersForMessage.find(x => x.id === displayUser) || { username: 'Unknown', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Unknown' };
+                
+                const label = isSentByMe ? `You to ${u.username}` : `${u.username} to You`;
+                const timeString = new Date(m.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', hour:'2-digit', minute:'2-digit' });
+                
+                html += `
+                    <div class="comment-item" style="${isSentByMe ? 'flex-direction:row-reverse;' : ''}">
+                        <img src="${u.avatar}" class="avatar avatar-md" alt="avatar">
+                        <div class="comment-bubble" style="${isSentByMe ? 'background:var(--accent-primary); color:white;' : ''}">
+                            <div style="font-size:12px; margin-bottom:4px; opacity:0.8;">${label} • ${timeString}</div>
+                            <div>${m.content}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        container.innerHTML = html;
+    } catch (err) {
+        container.innerHTML = '<p style="color:var(--danger);">Failed to load messages.</p>';
+    }
+}
+
+async function sendMessage() {
+    const receiverId = document.getElementById('msg-receiver').value;
+    const content = document.getElementById('msg-content').value.trim();
+    
+    if (!receiverId || !content) return alert('Please select a user and write a message');
+    
+    try {
+        await fetchWithAuth(`${API_URL}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ receiver_id: receiverId, content })
+        });
+        loadMessages(); // reload to show new msg
+    } catch (err) {
+        alert('Failed to send message');
+    }
+}
+
 
 // --- AUTHENTICATION LOGIC ---
 

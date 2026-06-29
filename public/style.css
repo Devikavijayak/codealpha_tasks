@@ -1,25 +1,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-    --bg-base: #0B0E14; /* Deep, rich space black/blue */
-    --bg-surface: #151A22; /* Slightly lighter for cards */
-    --bg-surface-hover: #1C222C;
-    --text-primary: #F3F4F6;
-    --text-secondary: #9CA3AF;
-    --text-muted: #6B7280;
+    --bg-base: #F8FAFC; /* Clean off-white background */
+    --bg-surface: #FFFFFF; /* Pure white for cards */
+    --bg-surface-hover: #F1F5F9;
+    --text-primary: #0F172A; /* Dark slate for high readability */
+    --text-secondary: #475569;
+    --text-muted: #94A3B8;
     
-    /* Neon Accents */
-    --accent-primary: #8B5CF6; /* Vibrant Purple */
-    --accent-secondary: #3B82F6; /* Bright Blue */
-    --accent-gradient: linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%);
-    --accent-glow: 0 0 20px rgba(139, 92, 246, 0.4);
+    /* Emerald Accents */
+    --accent-primary: #10B981; /* Emerald Green */
+    --accent-secondary: #059669; /* Darker Emerald */
+    --accent-gradient: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    --accent-glow: 0 0 20px rgba(16, 185, 129, 0.3);
     
-    --danger: #F43F5E;
-    --danger-glow: 0 0 15px rgba(244, 63, 94, 0.4);
+    --danger: #EF4444;
+    --danger-glow: 0 0 15px rgba(239, 68, 68, 0.3);
     --success: #10B981;
     
-    --border-color: rgba(255, 255, 255, 0.08);
-    --border-color-light: rgba(255, 255, 255, 0.15);
+    --border-color: #E2E8F0; /* Soft light gray border */
+    --border-color-light: #F1F5F9;
     
     --font-sans: 'Plus Jakarta Sans', sans-serif;
     
