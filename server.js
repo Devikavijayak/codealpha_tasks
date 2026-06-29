@@ -212,6 +212,25 @@ app.get('/api/posts', authenticateToken, (req, res) => {
     });
 });
 
+// Get User Posts
+app.get('/api/users/:id/posts', authenticateToken, (req, res) => {
+    const targetUserId = req.params.id === 'me' ? req.user.id : req.params.id;
+    const query = `
+        SELECT p.*, u.username, u.avatar,
+        (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likesCount,
+        (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as commentsCount,
+        EXISTS(SELECT 1 FROM likes WHERE post_id = p.id AND user_id = ?) as isLikedByMe
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        WHERE p.user_id = ?
+        ORDER BY p.timestamp DESC
+    `;
+    db.all(query, [req.user.id, targetUserId], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
 // Create a post
 app.post('/api/posts', authenticateToken, (req, res) => {
     const { content } = req.body;

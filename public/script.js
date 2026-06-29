@@ -54,7 +54,91 @@ function renderProfileTab() {
             <p>${currentUser.bio || 'Living my best life ✨'}</p>
         </div>
     `;
+
+    loadProfilePosts();
 }
+
+async function loadProfilePosts() {
+    const container = document.getElementById('profile-posts-container');
+    container.innerHTML = '<div class="skeleton-line"></div>';
+
+    try {
+        const res = await fetchWithAuth(`${API_URL}/users/me/posts`);
+        const posts = await res.json();
+        
+        container.innerHTML = '';
+        if (posts.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:var(--text-muted);">You have not posted anything yet.</p>';
+            return;
+        }
+
+        posts.forEach(post => {
+            container.appendChild(createPostElement(post));
+        });
+    } catch (err) {
+        container.innerHTML = '<p style="color:var(--danger);">Error loading posts.</p>';
+    }
+}
+
+// Search functionality
+document.getElementById('search-input')?.addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    const posts = document.querySelectorAll('#posts-container .post');
+    posts.forEach(post => {
+        const text = post.querySelector('.post-text').textContent.toLowerCase();
+        const username = post.querySelector('.username').textContent.toLowerCase();
+        if (text.includes(query) || username.includes(query)) {
+            post.style.display = 'block';
+        } else {
+            post.style.display = 'none';
+        }
+    });
+});
+
+// Setup mock content for other tabs
+document.addEventListener('DOMContentLoaded', () => {
+    // Notifications mock
+    document.getElementById('tab-notifications').innerHTML = `
+        <div style="text-align:left;">
+            <h3 style="margin-bottom:16px;">Notifications</h3>
+            <div class="comment-item"><div class="comment-bubble"><strong>Alice</strong> liked your post. <br><small>2 hours ago</small></div></div>
+            <div class="comment-item"><div class="comment-bubble"><strong>Bob</strong> started following you! <br><small>5 hours ago</small></div></div>
+            <div class="comment-item"><div class="comment-bubble"><strong>Charlie</strong> commented on your post. <br><small>1 day ago</small></div></div>
+        </div>
+    `;
+
+    // Messages mock
+    document.getElementById('tab-messages').innerHTML = `
+        <div style="text-align:left;">
+            <h3 style="margin-bottom:16px;">Messages</h3>
+            <div class="comment-item">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alice" class="avatar avatar-md" alt="avatar">
+                <div class="comment-bubble" style="flex:1;"><strong>Alice</strong><br><span style="color:var(--text-muted)">Hey, how is the project going?</span></div>
+            </div>
+            <div class="comment-item">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Bob" class="avatar avatar-md" alt="avatar">
+                <div class="comment-bubble" style="flex:1;"><strong>Bob</strong><br><span style="color:var(--text-muted)">Check out this link...</span></div>
+            </div>
+        </div>
+    `;
+
+    // Explore mock
+    document.getElementById('tab-explore').innerHTML = `
+        <div style="text-align:left;">
+            <h3 style="margin-bottom:16px;">Trending Topics</h3>
+            <div style="background:var(--card-bg); padding:16px; border-radius:var(--radius-md); margin-bottom:12px;">
+                <small style="color:var(--text-muted)">Trending in Tech</small>
+                <h4>#WebDevelopment</h4>
+                <small>15.4K posts</small>
+            </div>
+            <div style="background:var(--card-bg); padding:16px; border-radius:var(--radius-md); margin-bottom:12px;">
+                <small style="color:var(--text-muted)">Trending Worldwide</small>
+                <h4>#AuraLaunch</h4>
+                <small>42.1K posts</small>
+            </div>
+        </div>
+    `;
+});
 
 // --- AUTHENTICATION LOGIC ---
 
