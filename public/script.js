@@ -1,23 +1,137 @@
 const API_URL = 'http://localhost:3000/api';
 let currentUser = null;
+let isLoginMode = true;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    await initApp();
+    checkAuthStatus();
     document.getElementById('btn-post').addEventListener('click', createPost);
 });
 
-async function initApp() {
-    try {
-        const res = await fetch(`\${API_URL}/users/1`);
-        currentUser = await res.json();
-        
-        updateNavbar();
-        updateProfileSidebar();
-        loadFeed();
-        loadSuggestions();
-    } catch (err) {
-        console.error('Failed to initialize app', err);
+// --- AUTHENTICATION LOGIC ---
+
+async function checkAuthStatus() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        showAuthScreen();
+        return;
     }
+
+    try {
+        const res = await fetchWithAuth(`\${API_URL}/users/me`);
+        if (!res.ok) throw new Error('Token invalid');
+        
+        currentUser = await res.json();
+        showAppScreen();
+        initApp();
+    } catch (err) {
+        console.error('Auth failed', err);
+        localStorage.removeItem('token');
+        showAuthScreen();
+    }
+}
+
+function showAuthScreen() {
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app-layout').style.display = 'none';
+}
+
+function showAppScreen() {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-layout').style.display = 'grid'; // Grid layout on desktop
+}
+
+function toggleAuthMode() {
+    isLoginMode = !isLoginMode;
+    const title = document.querySelector('.auth-brand h2');
+    const subtitle = document.getElementById('auth-subtitle');
+    const submitBtn = document.getElementById('auth-submit-btn');
+    const switchText = document.getElementById('auth-switch-text');
+    const switchLink = document.getElementById('auth-switch-link');
+    
+    if (isLoginMode) {
+        title.textContent = 'Welcome back';
+        subtitle.textContent = 'Sign in to connect with your world.';
+        submitBtn.textContent = 'Sign In';
+        switchText.textContent = "Don't have an account?";
+        switchLink.textContent = 'Create one';
+    } else {
+        title.textContent = 'Join Aura';
+        subtitle.textContent = 'Create an account to get started.';
+        submitBtn.textContent = 'Sign Up';
+        switchText.textContent = "Already have an account?";
+        switchLink.textContent = 'Sign In';
+    }
+    document.getElementById('auth-error').textContent = '';
+}
+
+async function handleAuth(event) {
+    event.preventDefault();
+    const username = document.getElementById('auth-username').value.trim();
+    const password = document.getElementById('auth-password').value;
+    const errorEl = document.getElementById('auth-error');
+    
+    if (!username || !password) return;
+    
+    const endpoint = isLoginMode ? '/auth/login' : '/auth/register';
+    
+    try {
+        const res = await fetch(`\${API_URL}\${endpoint}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        
+        const data = await res.json();
+        if (!res.ok) {
+            errorEl.textContent = data.error || 'Authentication failed';
+            return;
+        }
+        
+        localStorage.setItem('token', data.token);
+        currentUser = data.user;
+        
+        document.getElementById('auth-password').value = '';
+        errorEl.textContent = '';
+        
+        showAppScreen();
+        initApp();
+        
+    } catch (err) {
+        errorEl.textContent = 'Network error. Please try again.';
+    }
+}
+
+function logout() {
+    localStorage.removeItem('token');
+    currentUser = null;
+    showAuthScreen();
+}
+
+async function fetchWithAuth(url, options = {}) {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        logout();
+        throw new Error('No token found');
+    }
+    
+    const headers = options.headers || {};
+    headers['Authorization'] = `Bearer \${token}`;
+    
+    const res = await fetch(url, { ...options, headers });
+    if (res.status === 401 || res.status === 403) {
+        logout();
+        throw new Error('Unauthorized');
+    }
+    return res;
+}
+
+// --- MAIN APP LOGIC ---
+
+async function initApp() {
+    updateNavbar();
+    updateProfileSidebar();
+    loadFeed();
+    loadSuggestions();
 }
 
 function updateNavbar() {
@@ -76,7 +190,7 @@ async function loadFeed() {
     `;
 
     try {
-        const res = await fetch(`\${API_URL}/feed`);
+        const res = await fetchWithAuth(`\${API_URL}/feed`);
         const posts = await res.json();
         
         container.innerHTML = '';
@@ -146,7 +260,7 @@ async function createPost() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
     try {
-        const res = await fetch(`\${API_URL}/posts`, {
+        const res = await fetchWithAuth(`\${API_URL}/posts`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ content })
@@ -166,7 +280,7 @@ async function createPost() {
 
 async function toggleLike(postId, btnEl) {
     try {
-        const res = await fetch(`\${API_URL}/posts/\${postId}/like`, { method: 'POST' });
+        const res = await fetchWithAuth(`\${API_URL}/posts/\${postId}/like`, { method: 'POST' });
         const data = await res.json();
         
         const icon = btnEl.querySelector('i');
@@ -206,7 +320,7 @@ async function loadComments(postId) {
     list.innerHTML = '<div class="skeleton-line short" style="margin-bottom:16px;"></div>';
     
     try {
-        const res = await fetch(`\${API_URL}/posts/\${postId}/comments`);
+        const res = await fetchWithAuth(`\${API_URL}/posts/\${postId}/comments`);
         const comments = await res.json();
         
         list.innerHTML = '';
@@ -234,7 +348,7 @@ async function handleCommentSubmit(event, postId) {
 
         input.disabled = true;
         try {
-            await fetch(`\${API_URL}/posts/\${postId}/comments`, {
+            await fetchWithAuth(`\${API_URL}/posts/\${postId}/comments`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content })
@@ -255,7 +369,7 @@ async function loadSuggestions() {
     if (!container) return;
     
     try {
-        const res = await fetch(`\${API_URL}/users`);
+        const res = await fetchWithAuth(`\${API_URL}/users`);
         const users = await res.json();
         
         container.innerHTML = '';
@@ -282,7 +396,7 @@ async function loadSuggestions() {
 
 async function toggleFollow(userId, btnEl) {
     try {
-        const res = await fetch(`\${API_URL}/users/\${userId}/follow`, { method: 'POST' });
+        const res = await fetchWithAuth(`\${API_URL}/users/\${userId}/follow`, { method: 'POST' });
         const data = await res.json();
         
         if (data.following) {
@@ -294,7 +408,10 @@ async function toggleFollow(userId, btnEl) {
         }
         
         loadFeed();
-        initApp(); 
+        // Since we don't have me endpoint updating followers instantly, we just refresh me
+        const meRes = await fetchWithAuth(`\${API_URL}/users/me`);
+        currentUser = await meRes.json();
+        updateProfileSidebar(); 
     } catch (err) {
         console.error('Error following', err);
     }

@@ -2,9 +2,12 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 const path = require('path');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecret_internship_key';
 
 app.use(cors());
 app.use(express.json());
@@ -26,6 +29,7 @@ function initDb() {
         db.run(`CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE,
+            password TEXT,
             bio TEXT,
             avatar TEXT
         )`);
@@ -69,14 +73,16 @@ function initDb() {
         )`);
 
         // Seed some data if empty
-        db.get("SELECT COUNT(*) AS count FROM users", (err, row) => {
+        db.get("SELECT COUNT(*) AS count FROM users", async (err, row) => {
             if (row && row.count === 0) {
-                db.run(`INSERT INTO users (username, bio, avatar) VALUES 
-                    ('Alice', 'Tech enthusiast', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alice'),
-                    ('Bob', 'Just here for memes', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob'),
-                    ('Charlie', 'Developer', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Charlie')
-                `);
+                const defaultPasswordHash = await bcrypt.hash('password123', 10);
                 
+                const stmt = db.prepare(`INSERT INTO users (username, password, bio, avatar) VALUES (?, ?, ?, ?)`);
+                stmt.run('Alice', defaultPasswordHash, 'Tech enthusiast', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alice');
+                stmt.run('Bob', defaultPasswordHash, 'Just here for memes', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob');
+                stmt.run('Charlie', defaultPasswordHash, 'Developer', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Charlie');
+                stmt.finalize();
+
                 setTimeout(() => {
                     db.run(`INSERT INTO posts (user_id, content) VALUES 
                         (1, 'Hello world! My first post on this platform.'),
@@ -93,34 +99,94 @@ function initDb() {
     });
 }
 
-// Current user mock (Hardcoded as Alice - id:1)
-const CURRENT_USER_ID = 1;
+// Middleware to verify JWT token
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
-// API Routes
+    if (!token) return res.status(401).json({ error: 'Access denied, token missing' });
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ error: 'Token invalid or expired' });
+        req.user = user; // { id: userId, username: username }
+        next();
+    });
+}
+
+// --- AUTH ROUTES ---
+
+// Register
+app.post('/api/auth/register', async (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=\${username}`;
+        
+        db.run("INSERT INTO users (username, password, bio, avatar) VALUES (?, ?, ?, ?)", 
+        [username, hashedPassword, 'Hello! I am new here.', avatar], function(err) {
+            if (err) {
+                if (err.message.includes('UNIQUE constraint failed')) {
+                    return res.status(400).json({ error: 'Username already taken' });
+                }
+                return res.status(500).json({ error: err.message });
+            }
+            
+            // Generate token immediately for login after register
+            const token = jwt.sign({ id: this.lastID, username }, JWT_SECRET, { expiresIn: '24h' });
+            res.json({ token, user: { id: this.lastID, username, avatar } });
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Login
+app.post('/api/auth/login', (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+
+    db.get("SELECT * FROM users WHERE username = ?", [username], async (err, user) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) return res.status(400).json({ error: 'Invalid credentials' });
+
+        const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '24h' });
+        res.json({ 
+            token, 
+            user: { id: user.id, username: user.username, bio: user.bio, avatar: user.avatar } 
+        });
+    });
+});
+
+// --- PROTECTED API ROUTES ---
 
 // Get all users
-app.get('/api/users', (req, res) => {
-    db.all("SELECT * FROM users", [], (err, rows) => {
+app.get('/api/users', authenticateToken, (req, res) => {
+    db.all("SELECT id, username, bio, avatar FROM users", [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
 });
 
-// Get user profile by id
-app.get('/api/users/:id', (req, res) => {
-    const userId = req.params.id;
-    db.get("SELECT * FROM users WHERE id = ?", [userId], (err, user) => {
+// Get user profile by id (including current user profile)
+app.get('/api/users/:id', authenticateToken, (req, res) => {
+    // If client asks for 'me', return the logged-in user profile
+    const userId = req.params.id === 'me' ? req.user.id : req.params.id;
+    
+    db.get("SELECT id, username, bio, avatar FROM users WHERE id = ?", [userId], (err, user) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!user) return res.status(404).json({ error: 'User not found' });
         
-        // Get follower/following counts
         db.get("SELECT COUNT(*) as followersCount FROM followers WHERE followee_id = ?", [userId], (err, followers) => {
             db.get("SELECT COUNT(*) as followingCount FROM followers WHERE follower_id = ?", [userId], (err, following) => {
                 user.followersCount = followers ? followers.followersCount : 0;
                 user.followingCount = following ? following.followingCount : 0;
                 
-                // Check if current user is following this user
-                db.get("SELECT * FROM followers WHERE follower_id = ? AND followee_id = ?", [CURRENT_USER_ID, userId], (err, followStatus) => {
+                db.get("SELECT * FROM followers WHERE follower_id = ? AND followee_id = ?", [req.user.id, userId], (err, followStatus) => {
                     user.isFollowing = !!followStatus;
                     res.json(user);
                 });
@@ -130,7 +196,7 @@ app.get('/api/users/:id', (req, res) => {
 });
 
 // Get all posts (Feed)
-app.get('/api/posts', (req, res) => {
+app.get('/api/posts', authenticateToken, (req, res) => {
     const query = `
         SELECT p.*, u.username, u.avatar,
         (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likesCount,
@@ -140,25 +206,25 @@ app.get('/api/posts', (req, res) => {
         JOIN users u ON p.user_id = u.id
         ORDER BY p.timestamp DESC
     `;
-    db.all(query, [CURRENT_USER_ID], (err, posts) => {
+    db.all(query, [req.user.id], (err, posts) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(posts);
     });
 });
 
 // Create a post
-app.post('/api/posts', (req, res) => {
+app.post('/api/posts', authenticateToken, (req, res) => {
     const { content } = req.body;
     if (!content) return res.status(400).json({ error: 'Content is required' });
     
-    db.run("INSERT INTO posts (user_id, content) VALUES (?, ?)", [CURRENT_USER_ID, content], function(err) {
+    db.run("INSERT INTO posts (user_id, content) VALUES (?, ?)", [req.user.id, content], function(err) {
         if (err) return res.status(500).json({ error: err.message });
-        res.json({ id: this.lastID, user_id: CURRENT_USER_ID, content });
+        res.json({ id: this.lastID, user_id: req.user.id, content });
     });
 });
 
 // Get comments for a post
-app.get('/api/posts/:postId/comments', (req, res) => {
+app.get('/api/posts/:postId/comments', authenticateToken, (req, res) => {
     const postId = req.params.postId;
     const query = `
         SELECT c.*, u.username, u.avatar 
@@ -174,34 +240,33 @@ app.get('/api/posts/:postId/comments', (req, res) => {
 });
 
 // Add a comment
-app.post('/api/posts/:postId/comments', (req, res) => {
+app.post('/api/posts/:postId/comments', authenticateToken, (req, res) => {
     const postId = req.params.postId;
     const { content } = req.body;
     if (!content) return res.status(400).json({ error: 'Content is required' });
     
-    db.run("INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)", [postId, CURRENT_USER_ID, content], function(err) {
+    db.run("INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)", [postId, req.user.id, content], function(err) {
         if (err) return res.status(500).json({ error: err.message });
-        res.json({ id: this.lastID, post_id: postId, user_id: CURRENT_USER_ID, content });
+        res.json({ id: this.lastID, post_id: postId, user_id: req.user.id, content });
     });
 });
 
 // Toggle Like
-app.post('/api/posts/:postId/like', (req, res) => {
+app.post('/api/posts/:postId/like', authenticateToken, (req, res) => {
     const postId = req.params.postId;
     
-    // Check if liked
-    db.get("SELECT * FROM likes WHERE user_id = ? AND post_id = ?", [CURRENT_USER_ID, postId], (err, row) => {
+    db.get("SELECT * FROM likes WHERE user_id = ? AND post_id = ?", [req.user.id, postId], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         
         if (row) {
             // Unlike
-            db.run("DELETE FROM likes WHERE user_id = ? AND post_id = ?", [CURRENT_USER_ID, postId], (err) => {
+            db.run("DELETE FROM likes WHERE user_id = ? AND post_id = ?", [req.user.id, postId], (err) => {
                 if (err) return res.status(500).json({ error: err.message });
                 res.json({ liked: false });
             });
         } else {
             // Like
-            db.run("INSERT INTO likes (user_id, post_id) VALUES (?, ?)", [CURRENT_USER_ID, postId], (err) => {
+            db.run("INSERT INTO likes (user_id, post_id) VALUES (?, ?)", [req.user.id, postId], (err) => {
                 if (err) return res.status(500).json({ error: err.message });
                 res.json({ liked: true });
             });
@@ -210,22 +275,20 @@ app.post('/api/posts/:postId/like', (req, res) => {
 });
 
 // Toggle Follow
-app.post('/api/users/:id/follow', (req, res) => {
+app.post('/api/users/:id/follow', authenticateToken, (req, res) => {
     const followeeId = req.params.id;
-    if (followeeId == CURRENT_USER_ID) return res.status(400).json({ error: 'Cannot follow yourself' });
+    if (followeeId == req.user.id) return res.status(400).json({ error: 'Cannot follow yourself' });
     
-    db.get("SELECT * FROM followers WHERE follower_id = ? AND followee_id = ?", [CURRENT_USER_ID, followeeId], (err, row) => {
+    db.get("SELECT * FROM followers WHERE follower_id = ? AND followee_id = ?", [req.user.id, followeeId], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         
         if (row) {
-            // Unfollow
-            db.run("DELETE FROM followers WHERE follower_id = ? AND followee_id = ?", [CURRENT_USER_ID, followeeId], (err) => {
+            db.run("DELETE FROM followers WHERE follower_id = ? AND followee_id = ?", [req.user.id, followeeId], (err) => {
                 if (err) return res.status(500).json({ error: err.message });
                 res.json({ following: false });
             });
         } else {
-            // Follow
-            db.run("INSERT INTO followers (follower_id, followee_id) VALUES (?, ?)", [CURRENT_USER_ID, followeeId], (err) => {
+            db.run("INSERT INTO followers (follower_id, followee_id) VALUES (?, ?)", [req.user.id, followeeId], (err) => {
                 if (err) return res.status(500).json({ error: err.message });
                 res.json({ following: true });
             });
@@ -234,7 +297,7 @@ app.post('/api/users/:id/follow', (req, res) => {
 });
 
 // Get user's feed (Posts by user and people they follow)
-app.get('/api/feed', (req, res) => {
+app.get('/api/feed', authenticateToken, (req, res) => {
     const query = `
         SELECT p.*, u.username, u.avatar,
         (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likesCount,
@@ -245,7 +308,7 @@ app.get('/api/feed', (req, res) => {
         WHERE p.user_id = ? OR p.user_id IN (SELECT followee_id FROM followers WHERE follower_id = ?)
         ORDER BY p.timestamp DESC
     `;
-    db.all(query, [CURRENT_USER_ID, CURRENT_USER_ID, CURRENT_USER_ID], (err, posts) => {
+    db.all(query, [req.user.id, req.user.id, req.user.id], (err, posts) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(posts);
     });

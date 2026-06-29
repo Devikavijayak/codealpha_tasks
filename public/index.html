@@ -11,7 +11,37 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-layout">
+    <!-- Auth Screen -->
+    <div class="auth-screen" id="auth-screen">
+        <div class="auth-card glass-card">
+            <div class="auth-brand">
+                <div class="brand-icon"><i class="fa-solid fa-layer-group"></i></div>
+                <h2>Welcome to Aura</h2>
+                <p id="auth-subtitle">Sign in to connect with your world.</p>
+            </div>
+            
+            <form id="auth-form" onsubmit="handleAuth(event)">
+                <div class="input-group">
+                    <label>Username</label>
+                    <input type="text" id="auth-username" required placeholder="Enter username">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="auth-password" required placeholder="Enter password">
+                </div>
+                <button type="submit" class="btn-primary auth-btn" id="auth-submit-btn">Sign In</button>
+            </form>
+            
+            <p class="auth-switch">
+                <span id="auth-switch-text">Don't have an account?</span> 
+                <a href="#" id="auth-switch-link" onclick="toggleAuthMode()">Create one</a>
+            </p>
+            <div id="auth-error" class="auth-error"></div>
+        </div>
+    </div>
+
+    <!-- App Layout (Hidden until logged in) -->
+    <div class="app-layout" id="app-layout" style="display: none;">
         
         <!-- Left Navigation Sidebar -->
         <nav class="sidebar-left">
@@ -44,6 +74,10 @@
                     <a href="#" class="nav-item">
                         <i class="fa-regular fa-user"></i>
                         <span>Profile</span>
+                    </a>
+                    <a href="#" class="nav-item" onclick="logout()" style="color: var(--danger)">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        <span>Logout</span>
                     </a>
                 </div>
 
