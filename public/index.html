@@ -54,24 +54,24 @@
                 </div>
 
                 <div class="nav-menu">
-                    <a href="#" class="nav-item active">
+                    <a href="#" class="nav-item active" onclick="switchTab('home')">
                         <i class="fa-solid fa-house"></i>
                         <span>Home</span>
                     </a>
-                    <a href="#" class="nav-item">
+                    <a href="#" class="nav-item" onclick="switchTab('explore')">
                         <i class="fa-solid fa-compass"></i>
                         <span>Explore</span>
                     </a>
-                    <a href="#" class="nav-item">
+                    <a href="#" class="nav-item" onclick="switchTab('notifications')">
                         <i class="fa-regular fa-bell"></i>
                         <span>Notifications</span>
                         <span class="badge">3</span>
                     </a>
-                    <a href="#" class="nav-item">
+                    <a href="#" class="nav-item" onclick="switchTab('messages')">
                         <i class="fa-regular fa-envelope"></i>
                         <span>Messages</span>
                     </a>
-                    <a href="#" class="nav-item">
+                    <a href="#" class="nav-item" onclick="switchTab('profile')">
                         <i class="fa-regular fa-user"></i>
                         <span>Profile</span>
                     </a>
@@ -92,42 +92,62 @@
         <!-- Main Feed Column -->
         <main class="feed-column">
             <header class="feed-header glass-effect">
-                <h2>Home</h2>
+                <h2 id="tab-title">Home</h2>
                 <div class="header-actions">
                     <button class="icon-btn"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
                 </div>
             </header>
 
-            <div class="create-post-container">
-                <div class="post-input-wrapper">
-                    <img src="" alt="Avatar" id="create-post-avatar" class="avatar avatar-md" style="display: none;">
-                    <div class="input-area">
-                        <textarea id="post-content" placeholder="What's happening?"></textarea>
-                        <div class="post-actions-row">
-                            <div class="media-actions">
-                                <button class="icon-btn tooltip" data-tip="Media"><i class="fa-regular fa-image"></i></button>
-                                <button class="icon-btn tooltip" data-tip="GIF"><i class="fa-solid fa-film"></i></button>
-                                <button class="icon-btn tooltip" data-tip="Emoji"><i class="fa-regular fa-face-smile"></i></button>
+            <div id="tab-home" class="tab-content active">
+                <div class="create-post-container">
+                    <div class="post-input-wrapper">
+                        <img src="" alt="Avatar" id="create-post-avatar" class="avatar avatar-md" style="display: none;">
+                        <div class="input-area">
+                            <textarea id="post-content" placeholder="What's happening?"></textarea>
+                            <div class="post-actions-row">
+                                <div class="media-actions">
+                                    <button class="icon-btn tooltip" data-tip="Media"><i class="fa-regular fa-image"></i></button>
+                                    <button class="icon-btn tooltip" data-tip="GIF"><i class="fa-solid fa-film"></i></button>
+                                    <button class="icon-btn tooltip" data-tip="Emoji"><i class="fa-regular fa-face-smile"></i></button>
+                                </div>
+                                <button class="btn-primary" id="btn-post">Post</button>
                             </div>
-                            <button class="btn-primary" id="btn-post">Post</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div id="posts-container">
+                    <!-- Skeleton Loader -->
+                    <div class="post-skeleton">
+                        <div class="skeleton-avatar"></div>
+                        <div class="skeleton-body">
+                            <div class="skeleton-line short"></div>
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-box"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="divider"></div>
-
-            <div id="posts-container">
-                <!-- Skeleton Loader -->
-                <div class="post-skeleton">
-                    <div class="skeleton-avatar"></div>
-                    <div class="skeleton-body">
-                        <div class="skeleton-line short"></div>
-                        <div class="skeleton-line"></div>
-                        <div class="skeleton-line"></div>
-                        <div class="skeleton-box"></div>
-                    </div>
-                </div>
+            <!-- Other Tabs Placeholder -->
+            <div id="tab-explore" class="tab-content" style="display: none; padding: 40px; text-align: center; color: var(--text-muted);">
+                <h3>Explore</h3>
+                <p>Trending topics and features coming soon.</p>
+            </div>
+            <div id="tab-notifications" class="tab-content" style="display: none; padding: 40px; text-align: center; color: var(--text-muted);">
+                <h3>Notifications</h3>
+                <p>You have 3 new notifications.</p>
+            </div>
+            <div id="tab-messages" class="tab-content" style="display: none; padding: 40px; text-align: center; color: var(--text-muted);">
+                <h3>Messages</h3>
+                <p>Your inbox is empty.</p>
+            </div>
+            <div id="tab-profile" class="tab-content" style="display: none; padding: 40px; text-align: center; color: var(--text-muted);">
+                <div id="profile-tab-header"></div>
+                <div id="profile-posts-container" style="text-align: left; margin-top: 20px;"></div>
             </div>
         </main>
 
@@ -176,10 +196,10 @@
 
     <!-- Mobile Bottom Nav -->
     <nav class="mobile-nav">
-        <a href="#" class="active"><i class="fa-solid fa-house"></i></a>
-        <a href="#"><i class="fa-solid fa-search"></i></a>
-        <a href="#"><i class="fa-regular fa-bell"></i></a>
-        <a href="#"><i class="fa-regular fa-envelope"></i></a>
+        <a href="#" class="nav-item active" onclick="switchTab('home')"><i class="fa-solid fa-house"></i></a>
+        <a href="#" class="nav-item" onclick="switchTab('explore')"><i class="fa-solid fa-search"></i></a>
+        <a href="#" class="nav-item" onclick="switchTab('notifications')"><i class="fa-regular fa-bell"></i></a>
+        <a href="#" class="nav-item" onclick="switchTab('messages')"><i class="fa-regular fa-envelope"></i></a>
     </nav>
 
     <script src="script.js"></script>

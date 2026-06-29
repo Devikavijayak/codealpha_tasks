@@ -7,6 +7,55 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-post').addEventListener('click', createPost);
 });
 
+// --- NAVIGATION LOGIC ---
+
+function switchTab(tabId) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(el => {
+        el.style.display = 'none';
+    });
+    
+    // Show selected tab
+    const tabEl = document.getElementById(`tab-${tabId}`);
+    if (tabEl) {
+        tabEl.style.display = 'block';
+    }
+
+    // Update active state in nav
+    document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.remove('active');
+    });
+    
+    // Find all links that trigger this tab and make them active
+    document.querySelectorAll(`.nav-item[onclick="switchTab('${tabId}')"]`).forEach(el => {
+        el.classList.add('active');
+    });
+
+    // Update Header Title
+    const title = document.getElementById('tab-title');
+    if (title) {
+        title.textContent = tabId.charAt(0).toUpperCase() + tabId.slice(1);
+    }
+
+    // If profile tab, load profile specific data
+    if (tabId === 'profile') {
+        renderProfileTab();
+    }
+}
+
+function renderProfileTab() {
+    const header = document.getElementById('profile-tab-header');
+    if (!currentUser) return;
+    
+    header.innerHTML = `
+        <div style="text-align: center;">
+            <img src="${currentUser.avatar}" class="avatar" style="width: 80px; height: 80px;" alt="avatar">
+            <h3>${currentUser.username}</h3>
+            <p>${currentUser.bio || 'Living my best life ✨'}</p>
+        </div>
+    `;
+}
+
 // --- AUTHENTICATION LOGIC ---
 
 async function checkAuthStatus() {
