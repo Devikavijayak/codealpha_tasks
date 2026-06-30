@@ -29,21 +29,3 @@ A mini social media platform built for a fast and premium internship assignment.
 3. **Open the App:**
    Open your browser and navigate to `http://localhost:3000`.
 
-## How to Upload to GitHub
-
-Since I am an AI assistant and do not have access to your personal GitHub account credentials, follow these steps to upload this repository to your GitHub:
-
-1. **Create a Repository on GitHub:**
-   Go to [GitHub](https://github.com/new) and create a new public repository (do not initialize it with a README, .gitignore, or license).
-
-2. **Push Your Code:**
-   Open your terminal in this project directory (`c:\\Users\\devud\\OneDrive\\Desktop\\manageit`) and run the following commands (replace `YOUR_USERNAME` and `YOUR_REPO_NAME` with your actual details):
-   
-   ```bash
-   git branch -M main
-   git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-   git push -u origin main
-   ```
-
-3. **Get Your Link:**
-   Once pushed, your repository link will be `https://github.com/YOUR_USERNAME/YOUR_REPO_NAME`. You can share this link for your internship!
